@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -210,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: CardSwiper(
                       controller: _swiperController,
                       cardsCount: state.currentCards.length,
-                      numberOfCardsDisplayed: 3,
+                      numberOfCardsDisplayed: math.min(3, state.currentCards.length),
                       backCardOffset: const Offset(0, 40),
                       padding: const EdgeInsets.all(0),
                       duration: AppConstants.cardSwipeDuration,

@@ -1,8 +1,8 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
 import '../../data/models/stats_model.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
@@ -50,14 +50,10 @@ class StatsOverlayWidget extends StatelessWidget {
       color: Colors.black.withOpacity(0.9),
       child: Stack(
         children: [
-          // Confetti Animation for Golden Ticket
+          // Confetti Animation for Golden Ticket - Simple particle effect
           if (isGoldenTicket)
             Positioned.fill(
-              child: Lottie.network(
-                'https://lottie.host/embed/e5987f34-41c1-4a12-ae70-2a5a7e56e501/hfm1RIuvqf.json',
-                fit: BoxFit.cover,
-                repeat: true,
-              ),
+              child: _GoldenTicketBackground(),
             ),
           
           // Main Content
@@ -260,4 +256,83 @@ class StatsOverlayWidget extends StatelessWidget {
       ],
     );
   }
+}
+
+// Simple animated background for Golden Ticket
+class _GoldenTicketBackground extends StatefulWidget {
+  @override
+  State<_GoldenTicketBackground> createState() => _GoldenTicketBackgroundState();
+}
+
+class _GoldenTicketBackgroundState extends State<_GoldenTicketBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: _ConfettiPainter(_controller.value),
+          child: Container(),
+        );
+      },
+    );
+  }
+}
+
+class _ConfettiPainter extends CustomPainter {
+  final double progress;
+
+  _ConfettiPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    
+    // Draw simple gold stars/particles
+    for (int i = 0; i < 20; i++) {
+      final x = (size.width / 20) * i;
+      final y = (progress * size.height + (i * 50) % size.height) % size.height;
+      
+      paint.color = i % 2 == 0 
+          ? AppConstants.goldenColor.withOpacity(0.6)
+          : AppTheme.primaryLight.withOpacity(0.6);
+      
+      // Draw star shape
+      final path = Path();
+      final radius = 10.0 + (i % 3) * 5;
+      for (int j = 0; j < 5; j++) {
+        final angle = (j * 4 * math.pi / 5) - math.pi / 2;
+        final px = x + radius * (j % 2 == 0 ? 1 : 0.5) * math.cos(angle);
+        final py = y + radius * (j % 2 == 0 ? 1 : 0.5) * math.sin(angle);
+        if (j == 0) {
+          path.moveTo(px, py);
+        } else {
+          path.lineTo(px, py);
+        }
+      }
+      path.close();
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ConfettiPainter oldDelegate) => true;
 }
