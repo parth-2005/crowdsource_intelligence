@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/models/card_model.dart';
 import '../../core/theme/app_theme.dart';
+import '../screens/survey_screen.dart';
 
 class CardViewWidget extends StatelessWidget {
   final CardModel card;
@@ -124,8 +125,31 @@ class CardViewWidget extends StatelessWidget {
                     
                     const SizedBox(height: 20),
                     
-                    // Swipe Indicators
-                    if (card.type != CardType.GOLDEN_TICKET)
+                    // Survey Button or Swipe Indicators
+                    if (card.type == CardType.SURVEY)
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => SurveyScreen(
+                                  surveyId: card.surveyId ?? 'unknown',
+                                  title: card.question,
+                                  rewardPoints: card.rewardPoints ?? 0,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'START SURVEY (+${card.rewardPoints ?? 0} PTS)',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (card.type != CardType.GOLDEN_TICKET)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

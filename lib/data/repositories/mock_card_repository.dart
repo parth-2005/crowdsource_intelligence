@@ -92,6 +92,20 @@ class MockCardRepository implements ICardRepository {
           totalVotes: 4321,
         ),
       ),
+
+      // Card #8: Survey Opportunity
+      const CardModel(
+        id: '8',
+        type: CardType.SURVEY,
+        question: 'Help us shape the future of EV charging.',
+        imageUrl: 'https://picsum.photos/400/600?random=8',
+        stats: StatsData(
+          yesPercent: 0,
+          totalVotes: 0,
+        ),
+        rewardPoints: 150,
+        surveyId: 's1',
+      ),
     ];
   }
 

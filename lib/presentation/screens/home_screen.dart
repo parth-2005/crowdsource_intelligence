@@ -159,6 +159,11 @@ class _HomeScreenState extends State<HomeScreen> {
               isGoldenTicket: state.isGoldenTicket,
               rewardPoints: state.rewardPoints,
               onNext: () {
+                // Award points based on fairness result
+                final pts = state.rewardPoints ?? 0;
+                if (pts > 0) {
+                  context.read<UserBloc>().add(AddKarmaPoints(points: pts));
+                }
                 // Resume feed to show next card
                 context.read<FeedBloc>().add(const ResumeFeed());
               },

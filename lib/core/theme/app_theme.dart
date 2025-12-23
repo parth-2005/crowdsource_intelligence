@@ -118,6 +118,22 @@ class AppTheme {
           color: textPrimary,
         ),
       ),
+      
+      // Bottom Navigation Bar Theme
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: backgroundColor,
+        elevation: 8,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: textSecondary,
+        selectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }

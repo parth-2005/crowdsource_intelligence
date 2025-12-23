@@ -7,7 +7,11 @@ import 'data/repositories/i_card_repository.dart';
 import 'data/repositories/mock_card_repository.dart';
 import 'logic/feed/feed_bloc.dart';
 import 'logic/user/user_bloc.dart';
+import 'logic/auth/auth_bloc.dart';
+import 'logic/auth/auth_state.dart';
 import 'presentation/screens/splash_screen.dart';
+import 'presentation/screens/login_screen.dart';
+import 'presentation/screens/main_wrapper_screen.dart';
 
 // GetIt instance for Dependency Injection
 final getIt = GetIt.instance;
@@ -49,13 +53,35 @@ class CrowdPulseApp extends StatelessWidget {
         BlocProvider<UserBloc>(
           create: (context) => getIt<UserBloc>(),
         ),
+        BlocProvider<AuthBloc>(
+          create: (context) => AuthBloc(),
+        ),
       ],
       child: MaterialApp(
         title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
-        home: const SplashScreen(),
+        home: const SplashOrAuthGate(),
       ),
+    );
+  }
+}
+
+class SplashOrAuthGate extends StatelessWidget {
+  const SplashOrAuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is Authenticated) {
+          return const MainWrapperScreen();
+        }
+        if (state is AuthLoading) {
+          return const SplashScreen();
+        }
+        return const LoginScreen();
+      },
     );
   }
 }

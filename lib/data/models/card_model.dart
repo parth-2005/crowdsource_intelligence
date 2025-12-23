@@ -4,6 +4,7 @@ enum CardType {
   BINARY,
   GOLDEN_TICKET,
   SPONSORED,
+  SURVEY,
 }
 
 class StatsData extends Equatable {
@@ -40,6 +41,7 @@ class CardModel extends Equatable {
   final String imageUrl;
   final StatsData stats;
   final int? rewardPoints;
+  final String? surveyId;
 
   const CardModel({
     required this.id,
@@ -48,6 +50,7 @@ class CardModel extends Equatable {
     required this.imageUrl,
     required this.stats,
     this.rewardPoints,
+    this.surveyId,
   });
 
   factory CardModel.fromJson(Map<String, dynamic> json) {
@@ -60,6 +63,7 @@ class CardModel extends Equatable {
       imageUrl: json['imageUrl'] as String,
       stats: StatsData.fromJson(json['stats'] as Map<String, dynamic>),
       rewardPoints: json['rewardPoints'] as int?,
+      surveyId: json['surveyId'] as String?,
     );
   }
 
@@ -71,9 +75,10 @@ class CardModel extends Equatable {
       'imageUrl': imageUrl,
       'stats': stats.toJson(),
       'rewardPoints': rewardPoints,
+      'surveyId': surveyId,
     };
   }
 
   @override
-  List<Object?> get props => [id, type, question, imageUrl, stats, rewardPoints];
+  List<Object?> get props => [id, type, question, imageUrl, stats, rewardPoints, surveyId];
 }

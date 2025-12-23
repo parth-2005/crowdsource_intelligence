@@ -9,6 +9,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
   final ICardRepository repository;
   List<CardModel> _allCards = [];
   CardModel? _lastSwipedCard;
+  DateTime? _lastSwipeTime;
 
   FeedBloc({required this.repository}) : super(const FeedLoading()) {
     on<LoadFeed>(_onLoadFeed);
@@ -44,6 +45,20 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
       final isMajority = (isYesSwipe && swipedCard.stats.yesPercent >= 50) ||
                          (!isYesSwipe && swipedCard.stats.yesPercent < 50);
 
+      // Fair Points Algorithm (anti-spam)
+      final now = DateTime.now();
+      bool isSpam = false;
+      if (_lastSwipeTime != null) {
+        final diff = now.difference(_lastSwipeTime!);
+        if (diff.inMilliseconds < 1200) {
+          isSpam = true;
+        }
+      }
+      _lastSwipeTime = now;
+
+      // Determine reward points (0 if spam)
+      final int? computedRewardPoints = isSpam ? 0 : swipedCard.rewardPoints;
+
       // Create stats model
       final statsModel = StatsModel(
         yesPercent: swipedCard.stats.yesPercent,
@@ -61,7 +76,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         stats: statsModel,
         isMajority: isMajority,
         isGoldenTicket: isGoldenTicket,
-        rewardPoints: swipedCard.rewardPoints,
+        rewardPoints: computedRewardPoints,
       ));
     } catch (e) {
       emit(FeedError(message: 'Failed to process swipe: ${e.toString()}'));

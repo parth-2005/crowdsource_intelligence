@@ -122,6 +122,32 @@ class StatsOverlayWidget extends StatelessWidget {
                         ],
                       ),
                     ),
+                  if (rewardPoints != null && rewardPoints == 0)
+                    FadeIn(
+                      delay: const Duration(milliseconds: 300),
+                      child: Column(
+                        children: [
+                          Text(
+                            'TOO FAST!',
+                            style: GoogleFonts.poppins(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.errorColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Read carefully to earn points',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
                   
                   // Pie Chart (only for non-golden tickets)
                   if (!isGoldenTicket)
