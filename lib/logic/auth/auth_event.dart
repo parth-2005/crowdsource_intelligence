@@ -7,8 +7,8 @@ abstract class AuthEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoginRequested extends AuthEvent {
-  final String? provider; // e.g., 'google'
+class AuthCheckRequested extends AuthEvent {}
 
-  const LoginRequested({this.provider});
-}
+class LoginRequested extends AuthEvent {}
+
+class LogoutRequested extends AuthEvent {}

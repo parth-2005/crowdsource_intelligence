@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../logic/user/user_bloc.dart';
 import '../../logic/user/user_state.dart';
 import '../../logic/user/user_event.dart';
+import '../../logic/auth/auth_bloc.dart';
+import '../../logic/auth/auth_state.dart';
+import '../../logic/auth/auth_event.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -49,13 +52,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 const SizedBox(height: 16),
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, authState) {
+                    final user = authState is Authenticated ? authState.user : null;
+                    return Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundImage: user?.photoURL != null
+                              ? NetworkImage(user!.photoURL!)
+                              : null,
+                          child: user?.photoURL == null
+                              ? const Icon(Icons.person, size: 28)
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user?.displayName ?? 'Guest',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              Text(
+                                user?.email ?? 'Not signed in',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            context.read<AuthBloc>().add(LogoutRequested());
+                          },
+                          icon: const Icon(Icons.logout),
+                          label: const Text('Logout'),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
+
                 Text(
                   'Your Profile',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 32),
 
@@ -95,8 +142,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   'Referral Hub',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 16),
 
@@ -131,8 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 children: [
                                   Text(
                                     userState.referralCode,
-                                    style:
-                                        Theme.of(context).textTheme.bodyLarge,
+                                    style: Theme.of(context).textTheme.bodyLarge,
                                   ),
                                   const Spacer(),
                                   Icon(
@@ -148,8 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content:
-                                      const Text('Code copied to clipboard!'),
+                                  content: const Text('Code copied to clipboard!'),
                                   backgroundColor: Colors.green,
                                   duration: const Duration(seconds: 2),
                                 ),
@@ -163,8 +208,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Text(
                         'Share this code with friends to earn +500 bonus points when they join!',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey,
-                        ),
+                              color: Colors.grey,
+                            ),
                       ),
                     ],
                   ),
@@ -191,8 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                contentPadding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                               ),
                             ),
                           ),
@@ -201,14 +245,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onPressed: () {
                               if (_referralController.text.isNotEmpty) {
                                 context.read<UserBloc>().add(
-                                  RedeemReferralCode(
-                                      _referralController.text),
-                                );
+                                      RedeemReferralCode(_referralController.text),
+                                    );
                                 _referralController.clear();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text(
-                                        '+500 Bonus points! 🎉'),
+                                    content: Text('+500 Bonus points! 🎉'),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
