@@ -5,10 +5,16 @@ import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'data/repositories/i_card_repository.dart';
 import 'data/repositories/mock_card_repository.dart';
+import 'data/repositories/i_forms_repository.dart';
+import 'data/repositories/mock_forms_repository.dart';
+import 'data/repositories/i_rewards_repository.dart';
+import 'data/repositories/mock_rewards_repository.dart';
 import 'logic/feed/feed_bloc.dart';
 import 'logic/user/user_bloc.dart';
 import 'logic/auth/auth_bloc.dart';
 import 'logic/auth/auth_state.dart';
+import 'logic/forms/forms_bloc.dart';
+import 'logic/rewards/rewards_bloc.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/login_screen.dart';
 import 'presentation/screens/main_wrapper_screen.dart';
@@ -25,9 +31,17 @@ void main() {
 
 /// Setup all dependencies using GetIt
 void setupDependencies() {
-  // Register Repository (Singleton)
+  // Register Repositories (Singletons)
   getIt.registerLazySingleton<ICardRepository>(
     () => MockCardRepository(),
+  );
+  
+  getIt.registerLazySingleton<IFormsRepository>(
+    () => MockFormsRepository(),
+  );
+  
+  getIt.registerLazySingleton<IRewardsRepository>(
+    () => MockRewardsRepository(),
   );
   
   // Register BLoCs (Factory - new instance each time)
@@ -37,6 +51,14 @@ void setupDependencies() {
   
   getIt.registerFactory<UserBloc>(
     () => UserBloc(),
+  );
+  
+  getIt.registerFactory<FormsBloc>(
+    () => FormsBloc(repository: getIt<IFormsRepository>()),
+  );
+  
+  getIt.registerFactory<RewardsBloc>(
+    () => RewardsBloc(repository: getIt<IRewardsRepository>()),
   );
 }
 
@@ -55,6 +77,12 @@ class CrowdPulseApp extends StatelessWidget {
         ),
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc(),
+        ),
+        BlocProvider<FormsBloc>(
+          create: (context) => getIt<FormsBloc>(),
+        ),
+        BlocProvider<RewardsBloc>(
+          create: (context) => getIt<RewardsBloc>(),
         ),
       ],
       child: MaterialApp(

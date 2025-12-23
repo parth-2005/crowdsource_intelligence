@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       // Add karma points to user
-      context.read<UserBloc>().add(AddKarmaPoints(points: karmaPoints));
+      context.read<UserBloc>().add(AddKarmaPoints(karmaPoints));
 
       // Return false to prevent default card removal (we handle it in BLoC)
       return false;
@@ -83,22 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: Text(
-          AppConstants.appName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: BlocBuilder<UserBloc, UserState>(
-              builder: (context, userState) {
-                return KarmaBadge(karmaPoints: userState.karmaPoints);
-              },
-            ),
-          ),
-        ],
-      ),
       body: BlocConsumer<FeedBloc, FeedState>(
         listener: (context, state) {
           // No need to do anything here for StatsReveal
@@ -162,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Award points based on fairness result
                 final pts = state.rewardPoints ?? 0;
                 if (pts > 0) {
-                  context.read<UserBloc>().add(AddKarmaPoints(points: pts));
+                  context.read<UserBloc>().add(AddKarmaPoints(pts));
                 }
                 // Resume feed to show next card
                 context.read<FeedBloc>().add(const ResumeFeed());
@@ -197,20 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  // Instructions
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '← Swipe to vote →',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-
                   // Card Stack
                   Expanded(
                     child: CardSwiper(
@@ -235,15 +205,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           card: state.currentCards[index],
                         );
                       },
-                    ),
-                  ),
-
-                  // Swipe Hint
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0, bottom: 24.0),
-                    child: Text(
-                      '${state.currentCards.length} cards remaining',
-                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
                 ],

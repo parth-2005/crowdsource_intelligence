@@ -10,7 +10,16 @@ abstract class UserEvent extends Equatable {
 class AddKarmaPoints extends UserEvent {
   final int points;
 
-  const AddKarmaPoints({required this.points});
+  const AddKarmaPoints(this.points);
+
+  @override
+  List<Object?> get props => [points];
+}
+
+class DeductKarmaPoints extends UserEvent {
+  final int points;
+
+  const DeductKarmaPoints(this.points);
 
   @override
   List<Object?> get props => [points];
@@ -18,4 +27,8 @@ class AddKarmaPoints extends UserEvent {
 
 class ResetKarma extends UserEvent {
   const ResetKarma();
+
+  @override
+  List<Object?> get props => [];
 }
+

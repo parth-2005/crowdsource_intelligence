@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../logic/user/user_bloc.dart';
+import '../../logic/user/user_state.dart';
+import '../widgets/karma_badge.dart';
 import 'forms_screen.dart';
 import 'home_screen.dart';
 import 'marketplace_screen.dart';
@@ -44,10 +48,23 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
         title: Text(
           _titleForIndex(_currentIndex),
           style: GoogleFonts.poppins(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: BlocBuilder<UserBloc, UserState>(
+              builder: (context, userState) {
+                return KarmaBadge(karmaPoints: userState.karmaPoints);
+              },
+            ),
+          ),
+        ],
+        toolbarHeight: 48,
+        centerTitle: true,
+        elevation: 0,
       ),
       body: IndexedStack(
         index: _currentIndex,

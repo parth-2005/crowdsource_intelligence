@@ -5,6 +5,7 @@ import 'user_state.dart';
 class UserBloc extends Bloc<UserEvent, UserState> {
   UserBloc() : super(const UserState()) {
     on<AddKarmaPoints>(_onAddKarmaPoints);
+    on<DeductKarmaPoints>(_onDeductKarmaPoints);
     on<ResetKarma>(_onResetKarma);
   }
 
@@ -12,6 +13,12 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     emit(state.copyWith(
       karmaPoints: state.karmaPoints + event.points,
       totalSwipes: state.totalSwipes + 1,
+    ));
+  }
+
+  void _onDeductKarmaPoints(DeductKarmaPoints event, Emitter<UserState> emit) {
+    emit(state.copyWith(
+      karmaPoints: (state.karmaPoints - event.points).clamp(0, 999999),
     ));
   }
 
