@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1027155111646",
+    "project_id": "crowdpulse-2005",
+    "storage_bucket": "crowdpulse-2005.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027155111646:android:80c3d84dc231474ed01c4f",
+        "android_client_info": {
+          "package_name": "com.example.crowdsource_intelligence"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxCULmgAaLWFBVmRKLwbTRx6dn-PQIkcY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
