@@ -5,6 +5,8 @@ enum CardType {
   GOLDEN_TICKET,
   SPONSORED,
   SURVEY,
+  TRAP,       // Honeypot card to detect bots
+  SUMMARY,    // Vibe check/summary card
 }
 
 class StatsData extends Equatable {
@@ -42,6 +44,9 @@ class CardModel extends Equatable {
   final StatsData stats;
   final int? rewardPoints;
   final String? surveyId;
+  final bool? correctTrapAnswer;   // For TRAP cards: true=Right, false=Left
+  final String? summaryTitle;      // For SUMMARY cards
+  final int? summaryScore;         // For SUMMARY cards (e.g., 80% conformity)
 
   const CardModel({
     required this.id,
@@ -51,6 +56,9 @@ class CardModel extends Equatable {
     required this.stats,
     this.rewardPoints,
     this.surveyId,
+    this.correctTrapAnswer,
+    this.summaryTitle,
+    this.summaryScore,
   });
 
   factory CardModel.fromJson(Map<String, dynamic> json) {
@@ -64,6 +72,9 @@ class CardModel extends Equatable {
       stats: StatsData.fromJson(json['stats'] as Map<String, dynamic>),
       rewardPoints: json['rewardPoints'] as int?,
       surveyId: json['surveyId'] as String?,
+      correctTrapAnswer: json['correctTrapAnswer'] as bool?,
+      summaryTitle: json['summaryTitle'] as String?,
+      summaryScore: json['summaryScore'] as int?,
     );
   }
 
@@ -76,9 +87,23 @@ class CardModel extends Equatable {
       'stats': stats.toJson(),
       'rewardPoints': rewardPoints,
       'surveyId': surveyId,
+      'correctTrapAnswer': correctTrapAnswer,
+      'summaryTitle': summaryTitle,
+      'summaryScore': summaryScore,
     };
   }
 
   @override
-  List<Object?> get props => [id, type, question, imageUrl, stats, rewardPoints, surveyId];
+  List<Object?> get props => [
+    id,
+    type,
+    question,
+    imageUrl,
+    stats,
+    rewardPoints,
+    surveyId,
+    correctTrapAnswer,
+    summaryTitle,
+    summaryScore,
+  ];
 }

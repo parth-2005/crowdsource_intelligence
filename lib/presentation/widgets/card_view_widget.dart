@@ -31,33 +31,48 @@ class CardViewWidget extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Background Image
-            Image.network(
-              card.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: AppTheme.cardBackground,
-                  child: const Icon(
-                    Icons.image_not_supported,
-                    size: 100,
-                    color: AppTheme.textSecondary,
-                  ),
-                );
-              },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  color: AppTheme.cardBackground,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                      color: AppTheme.primaryColor,
+            // Background Image with offline-safe fallback
+            Builder(
+              builder: (context) {
+                final hasNetworkImage = card.imageUrl.startsWith('http');
+                if (!hasNetworkImage || card.imageUrl.isEmpty) {
+                  return Container(
+                    color: AppTheme.cardBackground,
+                    child: const Icon(
+                      Icons.image,
+                      size: 100,
+                      color: AppTheme.textSecondary,
                     ),
-                  ),
+                  );
+                }
+                return Image.network(
+                  card.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: AppTheme.cardBackground,
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        size: 100,
+                        color: AppTheme.textSecondary,
+                      ),
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: AppTheme.cardBackground,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -115,6 +130,8 @@ class CardViewWidget extends StatelessWidget {
                     // Question
                     Text(
                       card.question,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,

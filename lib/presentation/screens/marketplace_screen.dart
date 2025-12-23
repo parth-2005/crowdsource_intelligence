@@ -6,6 +6,8 @@ import '../../logic/rewards/rewards_state.dart';
 import '../../logic/user/user_bloc.dart';
 import '../../logic/user/user_state.dart';
 import '../../logic/user/user_event.dart';
+import '../../logic/auth/auth_bloc.dart';
+import '../../logic/auth/auth_state.dart';
 import '../../data/models/reward_model.dart';
 
 class MarketplaceScreen extends StatefulWidget {
@@ -25,60 +27,100 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<RewardsBloc, RewardsState>(
-        builder: (context, state) {
-          if (state is RewardsLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          if (state is RewardsLoaded) {
-            if (state.rewards.isEmpty) {
-              return const Center(
-                child: Text('No rewards available'),
-              );
-            }
-
-            return GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: state.rewards.length,
-              itemBuilder: (context, index) {
-                final reward = state.rewards[index];
-                return _RewardCard(
-                  reward: reward,
-                  onTap: () => _showCheckoutDialog(context, reward),
-                );
-              },
-            );
-          }
-
-          if (state is RewardsError) {
+      body: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
+          // If not authenticated, show login prompt
+          if (authState is! Authenticated) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Error: ${state.message}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
+                  const Icon(
+                    Icons.lock_outline,
+                    size: 80,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Sign In Required',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Sign in to save your rewards and redeem them!',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
                     onPressed: () {
-                      context.read<RewardsBloc>().add(LoadRewards());
+                      Navigator.of(context).pushNamed('/login');
                     },
-                    child: const Text('Retry'),
+                    icon: const Icon(Icons.login),
+                    label: const Text('Sign In'),
                   ),
                 ],
               ),
             );
           }
 
-          return const Center(
-            child: Text('No rewards available'),
+          // If authenticated, show rewards
+          return BlocBuilder<RewardsBloc, RewardsState>(
+            builder: (context, state) {
+              if (state is RewardsLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+
+              if (state is RewardsLoaded) {
+                if (state.rewards.isEmpty) {
+                  return const Center(
+                    child: Text('No rewards available'),
+                  );
+                }
+
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.8,
+                  ),
+                  itemCount: state.rewards.length,
+                  itemBuilder: (context, index) {
+                    final reward = state.rewards[index];
+                    return _RewardCard(
+                      reward: reward,
+                      onTap: () => _showCheckoutDialog(context, reward),
+                    );
+                  },
+                );
+              }
+
+              if (state is RewardsError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Error: ${state.message}'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<RewardsBloc>().add(LoadRewards());
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return const Center(
+                child: Text('No rewards available'),
+              );
+            },
           );
         },
       ),

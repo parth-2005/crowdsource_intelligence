@@ -6,12 +6,11 @@ import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import '../../logic/feed/feed_bloc.dart';
 import '../../logic/feed/feed_event.dart';
 import '../../logic/feed/feed_state.dart';
+import '../../data/models/card_model.dart';
 import '../../logic/user/user_bloc.dart';
 import '../../logic/user/user_event.dart';
-import '../../logic/user/user_state.dart';
 import '../widgets/card_view_widget.dart';
 import '../widgets/stats_overlay_widget.dart';
-import '../widgets/karma_badge.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 
@@ -24,6 +23,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final CardSwiperController _swiperController = CardSwiperController();
+  // Keep a local copy of the last loaded cards to render during transient states
+  List<CardModel> _lastCards = const [];
 
   @override
   void initState() {
@@ -85,8 +86,21 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppTheme.backgroundColor,
       body: BlocConsumer<FeedBloc, FeedState>(
         listener: (context, state) {
-          // No need to do anything here for StatsReveal
-          // The builder will handle showing the overlay
+          // Handle quick swipe feedback with a transient pill and then resume
+          if (state is SwipeFeedback) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.feedback),
+                duration: const Duration(milliseconds: 800),
+              ),
+            );
+            // After a short delay, resume to advance the stack
+            Future.delayed(const Duration(milliseconds: 900), () {
+              if (mounted) {
+                context.read<FeedBloc>().add(const ResumeFeed());
+              }
+            });
+          }
         },
         builder: (context, state) {
           if (state is FeedLoading) {
@@ -155,6 +169,8 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           if (state is FeedLoaded) {
+            // Cache for transient rendering during SwipeFeedback
+            _lastCards = state.currentCards;
             if (state.currentCards.isEmpty) {
               return Center(
                 child: Column(
@@ -203,6 +219,40 @@ class _HomeScreenState extends State<HomeScreen> {
                       ) {
                         return CardViewWidget(
                           card: state.currentCards[index],
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // During quick feedback, keep showing the last known stack
+          if (state is SwipeFeedback) {
+            if (_lastCards.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: CardSwiper(
+                      controller: _swiperController,
+                      cardsCount: _lastCards.length,
+                      numberOfCardsDisplayed: math.min(3, _lastCards.length),
+                      backCardOffset: const Offset(0, 40),
+                      padding: const EdgeInsets.all(0),
+                      duration: AppConstants.cardSwipeDuration,
+                      maxAngle: 30,
+                      threshold: 80,
+                      scale: 0.9,
+                      isDisabled: false,
+                      onSwipe: _onSwipe,
+                      cardBuilder: (context, index, _, __) {
+                        return CardViewWidget(
+                          card: _lastCards[index],
                         );
                       },
                     ),

@@ -24,6 +24,32 @@ class FeedLoaded extends FeedState {
   List<Object?> get props => [currentCards];
 }
 
+class SwipeFeedback extends FeedState {
+  final String feedback;
+  final int? rewardPoints;
+
+  const SwipeFeedback({
+    required this.feedback,
+    this.rewardPoints,
+  });
+
+  @override
+  List<Object?> get props => [feedback, rewardPoints];
+}
+
+class TrapDetected extends FeedState {
+  final bool isCorrect;
+  final CardModel card;
+
+  const TrapDetected({
+    required this.isCorrect,
+    required this.card,
+  });
+
+  @override
+  List<Object?> get props => [isCorrect, card];
+}
+
 class StatsReveal extends FeedState {
   final StatsModel stats;
   final bool isMajority;

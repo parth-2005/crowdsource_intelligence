@@ -1,24 +1,33 @@
 import 'package:equatable/equatable.dart';
+import '../../data/models/user_model.dart';
 
 class UserState extends Equatable {
-  final int karmaPoints;
-  final int totalSwipes;
+  final UserModel user;
 
   const UserState({
-    this.karmaPoints = 0,
-    this.totalSwipes = 0,
-  });
+    UserModel? user,
+  }) : user = user ??
+      const UserModel(
+        id: 'user_123',
+        email: 'user@example.com',
+        karmaPoints: 0,
+        trustScore: 50,
+        referralCode: 'PARTH2024',
+        hasRedeemedReferral: false,
+      );
 
   UserState copyWith({
-    int? karmaPoints,
-    int? totalSwipes,
+    UserModel? user,
   }) {
-    return UserState(
-      karmaPoints: karmaPoints ?? this.karmaPoints,
-      totalSwipes: totalSwipes ?? this.totalSwipes,
-    );
+    return UserState(user: user ?? this.user);
   }
 
+  // Convenience getters
+  int get karmaPoints => user.karmaPoints;
+  int get trustScore => user.trustScore;
+  String get referralCode => user.referralCode;
+  bool get hasRedeemedReferral => user.hasRedeemedReferral;
+
   @override
-  List<Object?> get props => [karmaPoints, totalSwipes];
+  List<Object?> get props => [user];
 }

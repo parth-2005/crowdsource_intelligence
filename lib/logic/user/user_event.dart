@@ -25,6 +25,24 @@ class DeductKarmaPoints extends UserEvent {
   List<Object?> get props => [points];
 }
 
+class CheckTrapAnswer extends UserEvent {
+  final bool isCorrect;
+
+  const CheckTrapAnswer(this.isCorrect);
+
+  @override
+  List<Object?> get props => [isCorrect];
+}
+
+class RedeemReferralCode extends UserEvent {
+  final String referralCode;
+
+  const RedeemReferralCode(this.referralCode);
+
+  @override
+  List<Object?> get props => [referralCode];
+}
+
 class ResetKarma extends UserEvent {
   const ResetKarma();
 

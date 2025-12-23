@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/card_model.dart';
 import '../../data/models/stats_model.dart';
@@ -10,11 +11,16 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
   List<CardModel> _allCards = [];
   CardModel? _lastSwipedCard;
   DateTime? _lastSwipeTime;
+  int _swipeCount = 0;
+  late int _nextSummaryThreshold;
 
   FeedBloc({required this.repository}) : super(const FeedLoading()) {
     on<LoadFeed>(_onLoadFeed);
     on<SwipeCard>(_onSwipeCard);
     on<ResumeFeed>(_onResumeFeed);
+    
+    // Initialize random summary threshold (8-12 swipes)
+    _nextSummaryThreshold = 8 + Random().nextInt(5);
   }
 
   Future<void> _onLoadFeed(LoadFeed event, Emitter<FeedState> emit) async {
@@ -22,6 +28,8 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     
     try {
       _allCards = await repository.fetchCards();
+      _swipeCount = 0;
+      _nextSummaryThreshold = 8 + Random().nextInt(5);
       emit(FeedLoaded(currentCards: _allCards));
     } catch (e) {
       emit(FeedError(message: 'Failed to load cards: ${e.toString()}'));
@@ -35,10 +43,19 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
       _lastSwipedCard = swipedCard;
 
       // Submit the swipe to repository
-      await repository.submitSwipe(
-        event.cardId,
-        event.direction == SwipeDirection.right,
-      );
+      await repository.submitSwipe(event.cardId, event.direction == SwipeDirection.right);
+
+      _swipeCount++;
+
+      // Handle TRAP cards
+      if (swipedCard.type == CardType.TRAP) {
+        final isCorrect = swipedCard.correctTrapAnswer == (event.direction == SwipeDirection.left);
+        emit(TrapDetected(
+          isCorrect: isCorrect,
+          card: swipedCard,
+        ));
+        return;
+      }
 
       // Calculate if user is in majority
       final isYesSwipe = event.direction == SwipeDirection.right;
@@ -71,13 +88,46 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
       // Check if it's a golden ticket
       final isGoldenTicket = swipedCard.type == CardType.GOLDEN_TICKET;
 
-      // Emit stats reveal state - FREEZE the UI here
-      emit(StatsReveal(
-        stats: statsModel,
-        isMajority: isMajority,
-        isGoldenTicket: isGoldenTicket,
-        rewardPoints: computedRewardPoints,
-      ));
+      // Check if we need to inject a summary card
+      if (_swipeCount >= _nextSummaryThreshold) {
+        // Create and inject a summary card at the top
+        final summaryCard = CardModel(
+          id: 'summary_${DateTime.now().millisecondsSinceEpoch}',
+          type: CardType.SUMMARY,
+          question: 'You\'re 75% in sync with the community 🎯',
+          imageUrl: 'https://via.placeholder.com/400x600?text=Vibe+Check',
+          stats: const StatsData(
+            yesPercent: 75,
+            totalVotes: 0,
+          ),
+          summaryTitle: 'Vibe Check',
+          summaryScore: 75,
+        );
+
+        // Insert at the beginning of the stack
+        _allCards.insert(0, summaryCard);
+
+        // Reset counters
+        _swipeCount = 0;
+        _nextSummaryThreshold = 8 + Random().nextInt(5);
+      }
+
+      // For BINARY, SURVEY, SPONSORED: Show quick feedback then continue
+      // For SUMMARY, GOLDEN_TICKET: Freeze and show stats
+      if (swipedCard.type == CardType.SUMMARY || isGoldenTicket) {
+        emit(StatsReveal(
+          stats: statsModel,
+          isMajority: isMajority,
+          isGoldenTicket: isGoldenTicket,
+          rewardPoints: computedRewardPoints,
+        ));
+      } else {
+        // Continuous flow: emit feedback pill and resume
+        emit(SwipeFeedback(
+          feedback: isMajority ? 'Connected! +${computedRewardPoints ?? 0}' : 'Unique! +${computedRewardPoints ?? 0}',
+          rewardPoints: computedRewardPoints,
+        ));
+      }
     } catch (e) {
       emit(FeedError(message: 'Failed to process swipe: ${e.toString()}'));
     }
