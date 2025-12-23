@@ -88,6 +88,12 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
       // Check if it's a golden ticket
       final isGoldenTicket = swipedCard.type == CardType.GOLDEN_TICKET;
 
+      // Remove the swiped card immediately for non-freeze types
+      final willFreeze = swipedCard.type == CardType.SUMMARY || isGoldenTicket;
+      if (!willFreeze) {
+        _allCards.removeWhere((card) => card.id == swipedCard.id);
+      }
+
       // Check if we need to inject a summary card
       if (_swipeCount >= _nextSummaryThreshold) {
         // Create and inject a summary card at the top
@@ -126,6 +132,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         emit(SwipeFeedback(
           feedback: isMajority ? 'Connected! +${computedRewardPoints ?? 0}' : 'Unique! +${computedRewardPoints ?? 0}',
           rewardPoints: computedRewardPoints,
+          currentCards: List<CardModel>.from(_allCards),
         ));
       }
     } catch (e) {

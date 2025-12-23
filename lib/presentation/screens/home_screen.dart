@@ -11,6 +11,7 @@ import '../../logic/user/user_bloc.dart';
 import '../../logic/user/user_event.dart';
 import '../widgets/card_view_widget.dart';
 import '../widgets/stats_overlay_widget.dart';
+import '../widgets/feedback_pill.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 
@@ -73,8 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
       // Add karma points to user
       context.read<UserBloc>().add(AddKarmaPoints(karmaPoints));
 
-      // Return false to prevent default card removal (we handle it in BLoC)
-      return false;
+      // Return true to allow CardSwiper to remove the card immediately
+      return true;
     }
 
     return true;
@@ -85,23 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: BlocConsumer<FeedBloc, FeedState>(
-        listener: (context, state) {
-          // Handle quick swipe feedback with a transient pill and then resume
-          if (state is SwipeFeedback) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.feedback),
-                duration: const Duration(milliseconds: 800),
-              ),
-            );
-            // After a short delay, resume to advance the stack
-            Future.delayed(const Duration(milliseconds: 900), () {
-              if (mounted) {
-                context.read<FeedBloc>().add(const ResumeFeed());
-              }
-            });
-          }
-        },
+        listener: (context, state) {},
         builder: (context, state) {
           if (state is FeedLoading) {
             return Center(
@@ -168,10 +153,9 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          if (state is FeedLoaded) {
-            // Cache for transient rendering during SwipeFeedback
-            _lastCards = state.currentCards;
-            if (state.currentCards.isEmpty) {
+          if (state is FeedLoaded || state is SwipeFeedback) {
+            final cards = state is FeedLoaded ? state.currentCards : (state as SwipeFeedback).currentCards;
+            if (cards.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -192,71 +176,45 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             }
 
-            // Show card stack
+            // Base card stack with optional feedback pill overlay
             return Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
+              child: Stack(
+                alignment: Alignment.topCenter,
                 children: [
-                  // Card Stack
-                  Expanded(
-                    child: CardSwiper(
-                      controller: _swiperController,
-                      cardsCount: state.currentCards.length,
-                      numberOfCardsDisplayed: math.min(3, state.currentCards.length),
-                      backCardOffset: const Offset(0, 40),
-                      padding: const EdgeInsets.all(0),
-                      duration: AppConstants.cardSwipeDuration,
-                      maxAngle: 30,
-                      threshold: 80,
-                      scale: 0.9,
-                      isDisabled: false,
-                      onSwipe: _onSwipe,
-                      cardBuilder: (
-                        context,
-                        index,
-                        horizontalThresholdPercentage,
-                        verticalThresholdPercentage,
-                      ) {
-                        return CardViewWidget(
-                          card: state.currentCards[index],
-                        );
-                      },
-                    ),
+                  Column(
+                    children: [
+                      Expanded(
+                        child: CardSwiper(
+                          controller: _swiperController,
+                          cardsCount: cards.length,
+                          numberOfCardsDisplayed: math.min(3, cards.length),
+                          backCardOffset: const Offset(0, 40),
+                          padding: const EdgeInsets.all(0),
+                          duration: AppConstants.cardSwipeDuration,
+                          maxAngle: 30,
+                          threshold: 80,
+                          scale: 0.9,
+                          isDisabled: false,
+                          onSwipe: _onSwipe,
+                          cardBuilder: (context, index, _, __) {
+                            return CardViewWidget(card: cards[index]);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }
-
-          // During quick feedback, keep showing the last known stack
-          if (state is SwipeFeedback) {
-            if (_lastCards.isEmpty) {
-              return const SizedBox.shrink();
-            }
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: CardSwiper(
-                      controller: _swiperController,
-                      cardsCount: _lastCards.length,
-                      numberOfCardsDisplayed: math.min(3, _lastCards.length),
-                      backCardOffset: const Offset(0, 40),
-                      padding: const EdgeInsets.all(0),
-                      duration: AppConstants.cardSwipeDuration,
-                      maxAngle: 30,
-                      threshold: 80,
-                      scale: 0.9,
-                      isDisabled: false,
-                      onSwipe: _onSwipe,
-                      cardBuilder: (context, index, _, __) {
-                        return CardViewWidget(
-                          card: _lastCards[index],
-                        );
-                      },
+                  if (state is SwipeFeedback)
+                    Positioned(
+                      top: 24,
+                      child: FeedbackPill(
+                        text: state.feedback,
+                        color: state.feedback.contains('Connected')
+                            ? AppTheme.successColor
+                            : AppTheme.primaryColor,
+                        isGold: false,
+                      ),
                     ),
-                  ),
                 ],
               ),
             );

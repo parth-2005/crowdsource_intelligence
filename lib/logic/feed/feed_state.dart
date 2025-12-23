@@ -27,14 +27,16 @@ class FeedLoaded extends FeedState {
 class SwipeFeedback extends FeedState {
   final String feedback;
   final int? rewardPoints;
+  final List<CardModel> currentCards;
 
   const SwipeFeedback({
     required this.feedback,
     this.rewardPoints,
+    required this.currentCards,
   });
 
   @override
-  List<Object?> get props => [feedback, rewardPoints];
+  List<Object?> get props => [feedback, rewardPoints, currentCards];
 }
 
 class TrapDetected extends FeedState {
