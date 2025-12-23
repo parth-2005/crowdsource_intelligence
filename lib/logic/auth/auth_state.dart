@@ -27,3 +27,12 @@ class Authenticated extends AuthState {
 class Unauthenticated extends AuthState {
   const Unauthenticated();
 }
+
+class AuthError extends AuthState {
+  final String message;
+
+  const AuthError({required this.message});
+
+  @override
+  List<Object?> get props => [message];
+}

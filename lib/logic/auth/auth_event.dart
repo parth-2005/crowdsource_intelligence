@@ -7,8 +7,19 @@ abstract class AuthEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoginRequested extends AuthEvent {
-  final String? provider; // e.g., 'google'
+// Check if a user is already cached on app startup
+class AuthCheckRequested extends AuthEvent {
+  const AuthCheckRequested();
+}
 
-  const LoginRequested({this.provider});
+class LoginRequested extends AuthEvent {
+  final String provider; // 'google'
+  const LoginRequested({required this.provider});
+
+  @override
+  List<Object?> get props => [provider];
+}
+
+class LogoutRequested extends AuthEvent {
+  const LogoutRequested();
 }

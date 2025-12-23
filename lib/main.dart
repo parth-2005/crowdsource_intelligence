@@ -13,6 +13,7 @@ import 'data/repositories/mock_rewards_repository.dart';
 import 'logic/feed/feed_bloc.dart';
 import 'logic/user/user_bloc.dart';
 import 'logic/auth/auth_bloc.dart';
+import 'logic/auth/auth_event.dart';
 import 'logic/auth/auth_state.dart';
 import 'logic/forms/forms_bloc.dart';
 import 'logic/rewards/rewards_bloc.dart';
@@ -82,7 +83,7 @@ class CrowdPulseApp extends StatelessWidget {
           create: (context) => getIt<UserBloc>(),
         ),
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(),
+          create: (context) => AuthBloc()..add(const AuthCheckRequested()),
         ),
         BlocProvider<FormsBloc>(
           create: (context) => getIt<FormsBloc>(),

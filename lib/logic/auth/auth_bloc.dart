@@ -4,39 +4,57 @@ import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  final FirebaseAuth _firebaseAuth;
+
   AuthBloc({FirebaseAuth? firebaseAuth})
       : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
         super(const AuthInitial()) {
+    on<AuthCheckRequested>(_onAuthCheckRequested);
     on<LoginRequested>(_onLoginRequested);
+    on<LogoutRequested>(_onLogoutRequested);
   }
 
-  final FirebaseAuth _firebaseAuth;
+  // 1. Check Session on Startup
+  Future<void> _onAuthCheckRequested(
+    AuthCheckRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      emit(Authenticated(userId: user.uid));
+    } else {
+      emit(const Unauthenticated());
+    }
+  }
 
+  // 2. Firebase Google Sign In Flow
   Future<void> _onLoginRequested(
     LoginRequested event,
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
     try {
-      // If already signed in, reuse the session
-      final existingUser = _firebaseAuth.currentUser;
-      if (existingUser != null) {
-        emit(Authenticated(userId: existingUser.uid));
-        return;
-      }
-
-      // Use Firebase's built-in Google provider for unified cross-platform auth
       final provider = GoogleAuthProvider();
-      final userCred = await _firebaseAuth.signInWithProvider(provider);
-      final uid = userCred.user?.uid;
+      final userCredential = await _firebaseAuth.signInWithProvider(provider);
+      final user = userCredential.user;
 
-      if (uid != null && uid.isNotEmpty) {
-        emit(Authenticated(userId: uid));
+      if (user != null) {
+        emit(Authenticated(userId: user.uid));
       } else {
-        emit(const Unauthenticated());
+        emit(const AuthError(message: 'User retrieval failed'));
       }
-    } catch (_) {
-      emit(const Unauthenticated());
+    } on FirebaseAuthException catch (e) {
+      emit(AuthError(message: e.message ?? 'Authentication failed'));
+    } catch (e) {
+      emit(AuthError(message: e.toString()));
     }
+  }
+
+  Future<void> _onLogoutRequested(
+    LogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    await _firebaseAuth.signOut();
+    emit(const Unauthenticated());
   }
 }
