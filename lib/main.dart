@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'data/repositories/i_card_repository.dart';
@@ -13,23 +12,17 @@ import 'data/repositories/mock_rewards_repository.dart';
 import 'logic/feed/feed_bloc.dart';
 import 'logic/user/user_bloc.dart';
 import 'logic/auth/auth_bloc.dart';
-import 'logic/auth/auth_event.dart';
 import 'logic/auth/auth_state.dart';
 import 'logic/forms/forms_bloc.dart';
 import 'logic/rewards/rewards_bloc.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/login_screen.dart';
 import 'presentation/screens/main_wrapper_screen.dart';
-import 'firebase_options.dart';
 
 // GetIt instance for Dependency Injection
 final getIt = GetIt.instance;
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+void main() {
   // Setup Dependency Injection
   setupDependencies();
   
@@ -83,7 +76,7 @@ class CrowdPulseApp extends StatelessWidget {
           create: (context) => getIt<UserBloc>(),
         ),
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc()..add(const AuthCheckRequested()),
+          create: (context) => AuthBloc(),
         ),
         BlocProvider<FormsBloc>(
           create: (context) => getIt<FormsBloc>(),
