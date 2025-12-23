@@ -24,13 +24,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final CardSwiperController _swiperController = CardSwiperController();
-  // Keep a local copy of the last loaded cards to render during transient states
-  List<CardModel> _lastCards = const [];
+  
+  // Local state for the "Toast" pill
+  bool _showPill = false;
+  String _pillText = '';
+  Color _pillColor = Colors.white;
 
   @override
   void initState() {
     super.initState();
-    // Load initial feed
     context.read<FeedBloc>().add(const LoadFeed());
   }
 
@@ -45,19 +47,22 @@ class _HomeScreenState extends State<HomeScreen> {
     int? currentIndex,
     CardSwiperDirection direction,
   ) {
-    // Trigger haptic feedback
-    HapticFeedback.mediumImpact();
+    HapticFeedback.lightImpact(); // Light impact for speed
 
     final feedState = context.read<FeedBloc>().state;
-    if (feedState is FeedLoaded && feedState.currentCards.isNotEmpty) {
-      final swipedCard = feedState.currentCards[previousIndex];
+    // Handle SwipeFeedback state too, as it contains the list now
+    List<CardModel> currentList = [];
+    
+    if (feedState is FeedLoaded) currentList = feedState.currentCards;
+    else if (feedState is SwipeFeedback) currentList = feedState.currentCards;
+
+    if (currentList.isNotEmpty) {
+      final swipedCard = currentList[previousIndex];
       
-      // Convert CardSwiper direction to our SwipeDirection
       final swipeDirection = direction == CardSwiperDirection.right
           ? SwipeDirection.right
           : SwipeDirection.left;
 
-      // Add swipe event to BLoC
       context.read<FeedBloc>().add(
         SwipeCard(
           cardId: swipedCard.id,
@@ -65,19 +70,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
 
-      // Calculate karma points
-      int karmaPoints = AppConstants.baseKarmaPoints;
-      if (swipedCard.rewardPoints != null) {
-        karmaPoints = swipedCard.rewardPoints!;
-      }
-
-      // Add karma points to user
+      // Optimistic UI update for karma (makes it feel faster)
+      int karmaPoints = swipedCard.rewardPoints ?? AppConstants.baseKarmaPoints;
       context.read<UserBloc>().add(AddKarmaPoints(karmaPoints));
 
-      // Return true to allow CardSwiper to remove the card immediately
-      return true;
+      return true; // Card flies away immediately (Continuous Flow)
     }
-
     return true;
   }
 
@@ -86,141 +84,89 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: BlocConsumer<FeedBloc, FeedState>(
-        listener: (context, state) {},
+        listener: (context, state) {
+          // 1. Listen for the Feedback State to trigger the Pill
+          if (state is SwipeFeedback) {
+            setState(() {
+              _showPill = true;
+              _pillText = state.feedback;
+              _pillColor = state.feedback.contains('Connected') 
+                  ? AppTheme.successColor 
+                  : AppTheme.primaryColor;
+            });
+
+            // 2. Auto-hide the pill after 1.5 seconds
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              if (mounted) {
+                setState(() => _showPill = false);
+              }
+            });
+          }
+        },
         builder: (context, state) {
           if (state is FeedLoading) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(
-                    color: AppTheme.primaryColor,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    AppConstants.loadingText,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
-            );
+            return const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor));
           }
 
           if (state is FeedError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 80,
-                    color: AppTheme.errorColor,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    state.message,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<FeedBloc>().add(const LoadFeed());
-                    },
-                    child: const Text('RETRY'),
-                  ),
-                ],
-              ),
-            );
+            return Center(child: Text(state.message)); // Simplified error for brevity
           }
 
           if (state is StatsReveal) {
-            // FREEZE: Show stats overlay
             return StatsOverlayWidget(
               stats: state.stats,
               isMajority: state.isMajority,
               isGoldenTicket: state.isGoldenTicket,
               rewardPoints: state.rewardPoints,
               onNext: () {
-                // Award points based on fairness result
                 final pts = state.rewardPoints ?? 0;
-                if (pts > 0) {
-                  context.read<UserBloc>().add(AddKarmaPoints(pts));
-                }
-                // Resume feed to show next card
+                if (pts > 0) context.read<UserBloc>().add(AddKarmaPoints(pts));
                 context.read<FeedBloc>().add(const ResumeFeed());
               },
             );
           }
 
-          if (state is FeedLoaded || state is SwipeFeedback) {
-            final cards = state is FeedLoaded ? state.currentCards : (state as SwipeFeedback).currentCards;
-            if (cards.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.check_circle_outline,
-                      size: 80,
-                      color: AppTheme.successColor,
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      AppConstants.noMoreCardsText,
-                      style: Theme.of(context).textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              );
-            }
+          // Determine which cards to show
+          List<CardModel> cards = [];
+          if (state is FeedLoaded) cards = state.currentCards;
+          if (state is SwipeFeedback) cards = state.currentCards;
 
-            // Base card stack with optional feedback pill overlay
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Stack(
-                alignment: Alignment.topCenter,
-                children: [
-                  Column(
-                    children: [
-                      Expanded(
-                        child: CardSwiper(
-                          controller: _swiperController,
-                          cardsCount: cards.length,
-                          numberOfCardsDisplayed: math.min(3, cards.length),
-                          backCardOffset: const Offset(0, 40),
-                          padding: const EdgeInsets.all(0),
-                          duration: AppConstants.cardSwipeDuration,
-                          maxAngle: 30,
-                          threshold: 80,
-                          scale: 0.9,
-                          isDisabled: false,
-                          onSwipe: _onSwipe,
-                          cardBuilder: (context, index, _, __) {
-                            return CardViewWidget(card: cards[index]);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (state is SwipeFeedback)
-                    Positioned(
-                      top: 24,
-                      child: FeedbackPill(
-                        text: state.feedback,
-                        color: state.feedback.contains('Connected')
-                            ? AppTheme.successColor
-                            : AppTheme.primaryColor,
-                        isGold: false,
-                      ),
-                    ),
-                ],
-              ),
-            );
+          if (cards.isEmpty) {
+            return const Center(child: Text("No more cards!"));
           }
 
-          return const SizedBox.shrink();
+          return Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              // Layer 1: The Swiper
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: CardSwiper(
+                  controller: _swiperController,
+                  cardsCount: cards.length,
+                  numberOfCardsDisplayed: math.min(3, cards.length),
+                  backCardOffset: const Offset(0, 40),
+                  padding: EdgeInsets.zero,
+                  duration: const Duration(milliseconds: 200), // Fast swipe
+                  onSwipe: _onSwipe,
+                  cardBuilder: (context, index, _, __) {
+                    return CardViewWidget(card: cards[index]);
+                  },
+                ),
+              ),
+
+              // Layer 2: The Feedback Pill (Controlled by Local State)
+              if (_showPill)
+                Positioned(
+                  top: 60, // Sits nicely below status bar
+                  child: FeedbackPill(
+                    text: _pillText,
+                    color: _pillColor,
+                    isGold: false,
+                  ),
+                ),
+            ],
+          );
         },
       ),
     );
