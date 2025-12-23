@@ -80,7 +80,7 @@ class CrowdPulseApp extends StatelessWidget {
           create: (context) => getIt<UserBloc>(),
         ),
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc()..add(AuthCheckRequested()),
+          create: (context) => AuthBloc(),
         ),
         BlocProvider<FormsBloc>(
           create: (context) => getIt<FormsBloc>(),

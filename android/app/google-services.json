@@ -12,7 +12,20 @@
           "package_name": "com.example.crowdsource_intelligence"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1027155111646-hmedr25eptdfs5c6cu20o5tbq1a8bo2m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.crowdsource_intelligence",
+            "certificate_hash": "403ffdd6650a70e5e6799ff3973da44b663f6f2e"
+          }
+        },
+        {
+          "client_id": "1027155111646-629oiq2vbb38rg8cov4016lavof3uhs7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDxCULmgAaLWFBVmRKLwbTRx6dn-PQIkcY"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1027155111646-629oiq2vbb38rg8cov4016lavof3uhs7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
